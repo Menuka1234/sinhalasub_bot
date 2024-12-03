@@ -4,11 +4,14 @@ from bs4 import BeautifulSoup
 import telebot
 import threading
 import time
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 # Directly input your Telegram bot token here
 API_TOKEN = '7636464954:AAGSwsAMV6ZLQf3G_PSdCPkks7mjbecSTf4'  # Replace with your actual token
 # Replace this with your actual group chat ID
 ALLOWED_CHAT_ID = -1002442784134  # Ensure this is the correct group chat ID
+# Replace this with your actual channel username
+CHANNEL_USERNAME = 'LkSubOfficial'  # Ensure the correct channel username (without @)
 
 bot = telebot.TeleBot(API_TOKEN, parse_mode='Markdown')
 
@@ -16,6 +19,14 @@ user_requests = {}  # Dictionary to store user requests
 
 moviehref = []
 moviename = []
+
+# Function to check if user is a member of the channel
+def is_member(user_id):
+    try:
+        member_status = bot.get_chat_member(f"@{CHANNEL_USERNAME}", user_id)
+        return member_status.status in ['member', 'administrator', 'creator']
+    except:
+        return False
 
 # Function to search movie link
 def search(name):
@@ -98,6 +109,18 @@ def handle_find(message):
         bot.reply_to(message, "This bot can only be used in the designated group.")
         return
 
+    user_id = message.from_user.id
+    if not is_member(user_id):
+        markup = InlineKeyboardMarkup()
+        join_button = InlineKeyboardButton("🔅Join Now🔅", url=f"https://t.me/{CHANNEL_USERNAME}")
+        markup.add(join_button)
+        bot.send_message(
+            message.chat.id, 
+            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..", 
+            reply_markup=markup
+        )
+        return
+
     name = message.text.split("/find ", 1)[1]
     link = search(name)
     beso = respon(link)
@@ -121,6 +144,18 @@ def handle_find(message):
 def handle_reply(message):
     if not is_allowed_group(message):
         bot.reply_to(message, "This bot can only be used in the designated group.")
+        return
+
+    user_id = message.from_user.id
+    if not is_member(user_id):
+        markup = InlineKeyboardMarkup()
+        join_button = InlineKeyboardButton("🔅Join Now🔅", url=f"https://t.me/{CHANNEL_USERNAME}")
+        markup.add(join_button)
+        bot.send_message(
+            message.chat.id, 
+            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..", 
+            reply_markup=markup
+        )
         return
 
     try:
@@ -153,4 +188,6 @@ def handle_conn(message):
 
 # Polling
 bot.polling()
+
+
 
