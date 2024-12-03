@@ -15,7 +15,10 @@ CHANNEL_USERNAME = 'LkSubOfficial'  # Ensure the correct channel username (witho
 
 bot = telebot.TeleBot(API_TOKEN, parse_mode='Markdown')
 
-user_requests = {}  # Dictionary to store user requests keyed by user ID
+user_requests = {}  # Dictionary to store user requests
+
+moviehref = []
+moviename = []
 
 # Function to check if user is a member of the channel
 def is_member(user_id):
@@ -47,8 +50,7 @@ def respon(ab):
 
 # Function to get movie list
 def movielist(beso):
-    moviehref = []
-    moviename = []
+    global moviehref, moviename
     fi = beso.find_all("h2", {"class": "post-box-title"})
     for i in fi:
         finda = i.find("a")
@@ -83,19 +85,28 @@ def subsave(subs, ss):
         f.write(res3.content)
     print('Download success....')
 
-# Function to clear user requests periodically
-def clear_user_requests():
-    while True:
-        time.sleep(3600)  # Sleep for 3600 seconds (1 hour)
-        user_requests.clear()
-        print('Cleared user requests')
+# Check if the message is from the allowed group
+def is_allowed_group(message):
+    return message.chat.id == ALLOWED_CHAT_ID
 
-# Start the clear_user_requests function in a separate thread
-threading.Thread(target=clear_user_requests, daemon=True).start()
+# Function to clear user_requests, moviehref, and moviename periodically
+def clear_requests():
+    while True:
+        time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
+        user_requests.clear()
+        global moviehref, moviename
+        moviehref.clear()
+        moviename.clear()
+        print('Cleared user_requests, moviehref, and moviename lists')
+
+# Start the clear_requests function in a separate thread
+threading.Thread(target=clear_requests, daemon=True).start()
 
 # Handler for /find command
 @bot.message_handler(commands=['find'])
 def handle_find(message):
+    global moviehref, moviename
+
     if not is_allowed_group(message):
         bot.reply_to(message, "This bot can only be used in the designated group.")
         return
@@ -112,6 +123,10 @@ def handle_find(message):
         )
         return
 
+    # Clear the previous movie lists
+    moviehref.clear()
+    moviename.clear()
+
     name = message.text.split("/find ", 1)[1]
     link = search(name)
     beso = respon(link)
@@ -125,11 +140,8 @@ def handle_find(message):
         response += "\n🔸Reply with the movie number to get subtitles🔹"
         msg = bot.reply_to(message, response)
 
-        # Store the user's request with the movie list and links keyed by user ID
-        user_requests[user_id] = {'moviename': moviename, 'moviehref': moviehref}
-
-        # Schedule to clear the user's request after 1 hour
-        threading.Timer(3600, lambda: user_requests.pop(user_id, None)).start()
+        # Store the user's request with the movie list and links
+        user_requests[msg.message_id] = {'moviename': moviename, 'moviehref': moviehref}
     else:
         bot.reply_to(message, "Movie Not Found!")
 
@@ -154,7 +166,7 @@ def handle_reply(message):
 
     try:
         gopage = int(message.text.strip())
-        user_data = user_requests.get(user_id)
+        user_data = user_requests.get(message.reply_to_message.message_id)
 
         if user_data and 1 <= gopage <= len(user_data['moviename']):
             gethref = subdown(gopage, user_data['moviehref'])
