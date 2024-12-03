@@ -105,6 +105,8 @@ threading.Thread(target=clear_requests, daemon=True).start()
 # Handler for /find command
 @bot.message_handler(commands=['find'])
 def handle_find(message):
+    global moviehref, moviename
+
     if not is_allowed_group(message):
         bot.reply_to(message, "This bot can only be used in the designated group.")
         return
@@ -120,6 +122,10 @@ def handle_find(message):
             reply_markup=markup
         )
         return
+
+    # Clear the previous movie lists
+    moviehref.clear()
+    moviename.clear()
 
     name = message.text.split("/find ", 1)[1]
     link = search(name)
@@ -188,5 +194,6 @@ def handle_conn(message):
 
 # Polling
 bot.polling()
+
 
 
