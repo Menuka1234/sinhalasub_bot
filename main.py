@@ -3,7 +3,11 @@ import requests
 from bs4 import BeautifulSoup
 import telebot
 
-API_TOKEN = ''
+# Directly input your Telegram bot token here
+API_TOKEN = '7636464954:AAGSwsAMV6ZLQf3G_PSdCPkks7mjbecSTf4'  # Replace with your actual token
+# Replace this with your actual group chat ID
+ALLOWED_CHAT_ID = -1002442784134  # Ensure this is the correct group chat ID
+
 bot = telebot.TeleBot(API_TOKEN, parse_mode='Markdown')
 
 user_requests = {}  # Dictionary to store user requests
@@ -66,9 +70,17 @@ def subsave(subs, ss):
         f.write(res3.content)
     print('Download success....')
 
+# Check if the message is from the allowed group
+def is_allowed_group(message):
+    return message.chat.id == ALLOWED_CHAT_ID
+
 # Handler for /find command
 @bot.message_handler(commands=['find'])
 def handle_find(message):
+    if not is_allowed_group(message):
+        bot.reply_to(message, "This bot can only be used in the designated group.")
+        return
+
     name = message.text.split("/find ", 1)[1]
     link = search(name)
     beso = respon(link)
@@ -90,6 +102,10 @@ def handle_find(message):
 # Handler for replying with the movie number
 @bot.message_handler(func=lambda message: message.reply_to_message and message.reply_to_message.text.startswith("Movie List"))
 def handle_reply(message):
+    if not is_allowed_group(message):
+        bot.reply_to(message, "This bot can only be used in the designated group.")
+        return
+
     try:
         gopage = int(message.text.strip())
         user_data = user_requests.get(message.reply_to_message.message_id)
