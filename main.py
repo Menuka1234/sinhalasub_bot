@@ -2,6 +2,8 @@ import os
 import requests
 from bs4 import BeautifulSoup
 import telebot
+import threading
+import time
 
 # Directly input your Telegram bot token here
 API_TOKEN = '7636464954:AAGSwsAMV6ZLQf3G_PSdCPkks7mjbecSTf4'  # Replace with your actual token
@@ -11,6 +13,9 @@ ALLOWED_CHAT_ID = -1002442784134  # Ensure this is the correct group chat ID
 bot = telebot.TeleBot(API_TOKEN, parse_mode='Markdown')
 
 user_requests = {}  # Dictionary to store user requests
+
+moviehref = []
+moviename = []
 
 # Function to search movie link
 def search(name):
@@ -34,8 +39,7 @@ def respon(ab):
 
 # Function to get movie list
 def movielist(beso):
-    moviehref = []
-    moviename = []
+    global moviehref, moviename
     fi = beso.find_all("h2", {"class": "post-box-title"})
     for i in fi:
         finda = i.find("a")
@@ -73,6 +77,19 @@ def subsave(subs, ss):
 # Check if the message is from the allowed group
 def is_allowed_group(message):
     return message.chat.id == ALLOWED_CHAT_ID
+
+# Function to clear user_requests, moviehref, and moviename periodically
+def clear_requests():
+    while True:
+        time.sleep(1800)  # Sleep for 1800 seconds (30 minutes)
+        user_requests.clear()
+        global moviehref, moviename
+        moviehref.clear()
+        moviename.clear()
+        print('Cleared user_requests, moviehref, and moviename lists')
+
+# Start the clear_requests function in a separate thread
+threading.Thread(target=clear_requests, daemon=True).start()
 
 # Handler for /find command
 @bot.message_handler(commands=['find'])
