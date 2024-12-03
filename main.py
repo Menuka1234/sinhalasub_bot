@@ -146,5 +146,11 @@ def handle_reply(message):
     except ValueError:
         bot.reply_to(message, "Please reply with a valid movie number.")
 
+# Handler for /conn command
+@bot.message_handler(commands=['conn'])
+def handle_conn(message):
+    bot.reply_to(message, "🔆I am Alive 💫")
+
 # Polling
 bot.polling()
+
