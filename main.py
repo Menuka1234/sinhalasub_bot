@@ -127,10 +127,10 @@ def handle_find(message):
             movn = moname.split("|")[0]
             response += f"🔰 {idx} ➡ {movn}\n"
         response += "\n🔸Reply with the movie number to get subtitles🔹"
-        bot.reply_to(message, response)
+        msg = bot.reply_to(message, response)
 
         # Store the user's request with the movie list and links keyed by user ID
-        user_requests[user_id] = {'moviename': moviename, 'moviehref': moviehref}
+        user_requests[user_id] = {'message_id': msg.message_id, 'moviename': moviename, 'moviehref': moviehref}
 
         # Schedule to clear the user's request after 1 hour
         threading.Timer(3600, lambda: user_requests.pop(user_id, None)).start()
@@ -158,10 +158,9 @@ def handle_reply(message):
 
     try:
         gopage = int(message.text.strip())
-        reply_to_message_id = message.reply_to_message.message_id
-        user_data = user_requests.get(reply_to_message_id)
+        user_data = user_requests.get(user_id)
 
-        if user_data and 1 <= gopage <= len(user_data['moviename']):
+        if user_data and user_data['message_id'] == message.reply_to_message.message_id and 1 <= gopage <= len(user_data['moviename']):
             gethref = subdown(gopage, user_data['moviehref'])
             if gethref:
                 subnameyes = subnamegen(gethref)
@@ -187,6 +186,7 @@ def handle_conn(message):
 
 # Polling
 bot.polling()
+
 
 
 
