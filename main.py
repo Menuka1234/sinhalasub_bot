@@ -17,7 +17,7 @@ bot = telebot.TeleBot(API_TOKEN, parse_mode='Markdown')
 
 # Dictionary to store user requests keyed by user ID
 user_requests = {}
-# Dictionary to map message IDs to film lists
+# Dictionary to map message IDs to film lists for each user
 message_to_filmlist = {}
 
 # Function to check if user is a member of the channel
@@ -90,12 +90,16 @@ def subsave(subs, ss):
         f.write(res3.content)
     print('Download success....')
 
-# Function to clear user requests periodically
+# Function to clear user requests periodically every 60 minutes
 def clear_user_requests():
     while True:
         time.sleep(3600)  # Sleep for 3600 seconds (1 hour)
+        
+        # Clear all user requests and film lists every hour.
         user_requests.clear()
-        print('Cleared user requests')
+        message_to_filmlist.clear()
+        
+        print('Cleared user requests and film lists every hour.')
 
 # Start clearing user requests in a separate thread
 threading.Thread(target=clear_user_requests, daemon=True).start()
@@ -140,14 +144,19 @@ def handle_find(message):
         sent_message = bot.reply_to(message, response)
         
         # Store the user's request with message ID mapping.
-        user_requests[user_id] = {'moviename': moviename, 'moviehref': moviehref}
+        if user_id not in user_requests:
+            user_requests[user_id] = []
         
+        # Append new film list details for this user.
+        user_requests[user_id].append({
+            'message_id': sent_message.id,
+            'moviename': moviename,
+            'moviehref': moviehref,
+        })
+
         # Map message ID to user's film list for later retrieval.
         message_to_filmlist[sent_message.id] = {'moviename': moviename, 'moviehref': moviehref}
 
-        # Schedule to clear the user's request after 1 hour.
-        threading.Timer(3600, lambda: user_requests.pop(user_id, None)).start()
-        
     else:
         bot.reply_to(message, "Movie Not Found!")
 
@@ -176,33 +185,34 @@ def handle_reply(message):
     try:
         gopage = int(message.text.strip())
         
-        # Retrieve user's data based on replied message ID.
-        film_data = message_to_filmlist[message.reply_to_message.id]
+        # Retrieve all film data for this user.
+        if user_id in user_requests:
+            film_data_list = user_requests[user_id]
 
-        if film_data and 1 <= gopage <= len(film_data['moviename']):
-            gethref = subdown(gopage, film_data['moviehref'])
-            if gethref:
-                subnameyes = subnamegen(gethref)
-                subsave(gethref, subnameyes)
+            # Find which film data corresponds to the replied message ID.
+            for film_data in film_data_list:
+                if film_data['message_id'] == message.reply_to_message.id:
+                    if 1 <= gopage <= len(film_data['moviename']):
+                        gethref = subdown(gopage, film_data['moviehref'])
+                        if gethref:
+                            subnameyes = subnamegen(gethref)
+                            subsave(gethref, subnameyes)
 
-                # Upload file to Telegram group.
-                with open(subnameyes + ".zip", "rb") as file:
-                    bot.send_document(message.chat.id, file)
+                            # Upload file to Telegram group.
+                            with open(subnameyes + ".zip", "rb") as file:
+                                bot.send_document(message.chat.id, file)
 
-                # Delete file after upload.
-                os.remove(subnameyes + ".zip")
+                            # Delete file after upload.
+                            os.remove(subnameyes + ".zip")
 
-                # Clear mapping after processing.
-                del message_to_filmlist[message.reply_to_message.id]
-
-            else:
-                bot.reply_to(message, "Invalid movie number!")
-                
+                        else:
+                            bot.reply_to(message, "Invalid movie number!")
+                    else:
+                        bot.reply_to(message, "Invalid movie number or no active search!")
+                    break
+            
             # Clear user's request after processing.
             del user_requests[user_id]
-            
-        else:
-            bot.reply_to(message, "Invalid movie number or no active search!")
             
     except ValueError:
         bot.reply_to(message, "Please reply with a valid movie number.")
