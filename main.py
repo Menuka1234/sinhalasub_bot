@@ -105,13 +105,14 @@ def handle_find(message):
         return
 
     user_id = message.from_user.id
+    
     if not is_member(user_id):
         markup = InlineKeyboardMarkup()
         join_button = InlineKeyboardButton("🔅Join Now🔅", url=f"https://t.me/{CHANNEL_USERNAME}")
         markup.add(join_button)
         bot.send_message(
-            message.chat.id, 
-            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..", 
+            message.chat.id,
+            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..",
             reply_markup=markup
         )
         return
@@ -127,6 +128,7 @@ def handle_find(message):
             movn = moname.split("|")[0]
             response += f"🔰 {idx} ➡ {movn}\n"
         response += "\n🔸Reply with the movie number to get subtitles🔹"
+        
         bot.reply_to(message, response)
 
         # Store the user's request with the movie list and links keyed by user ID
@@ -134,6 +136,7 @@ def handle_find(message):
 
         # Schedule to clear the user's request after 1 hour
         threading.Timer(3600, lambda: user_requests.pop(user_id, None)).start()
+        
     else:
         bot.reply_to(message, "Movie Not Found!")
 
@@ -145,15 +148,18 @@ def handle_reply(message):
         return
 
     user_id = message.from_user.id
+    
     if not is_member(user_id):
         markup = InlineKeyboardMarkup()
         join_button = InlineKeyboardButton("🔅Join Now🔅", url=f"https://t.me/{CHANNEL_USERNAME}")
         markup.add(join_button)
+        
         bot.send_message(
-            message.chat.id, 
-            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..", 
+            message.chat.id,
+            "ම්ම්..🙄 ඔයා අපේ Main චැනල් එකට ජොයින් වෙලා නෑ..\n\n🥲නැත්තන් subtitles ගන්න වෙන්නේ නෑ..🥲\n\n😊පහලින් තියන 'Join Now' බට්න් එක ඔබලා ගිහින් අපේ Main චැනල් එකට ජොයින් වෙලා එන්නකෝ..",
             reply_markup=markup
         )
+        
         return
 
     try:
@@ -174,6 +180,10 @@ def handle_reply(message):
 
                 # Delete file after upload
                 os.remove(subnameyes + ".zip")
+                
+                # Clear user's request after processing.
+                del user_requests[user_id]
+                
             else:
                 bot.reply_to(message, "Invalid movie number!")
                 
@@ -193,5 +203,3 @@ def handle_conn(message):
 
 # Polling loop for the bot to keep running and listening for messages.
 bot.polling()
-
-
