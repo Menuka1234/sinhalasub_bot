@@ -190,5 +190,3 @@ bot.polling()
 
 
 
-
-
