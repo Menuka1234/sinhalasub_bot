@@ -158,7 +158,8 @@ def handle_reply(message):
 
     try:
         gopage = int(message.text.strip())
-        user_data = user_requests.get(user_id)
+        reply_to_message_id = message.reply_to_message.message_id
+        user_data = user_requests.get(reply_to_message_id)
 
         if user_data and 1 <= gopage <= len(user_data['moviename']):
             gethref = subdown(gopage, user_data['moviehref'])
@@ -186,6 +187,7 @@ def handle_conn(message):
 
 # Polling
 bot.polling()
+
 
 
 
