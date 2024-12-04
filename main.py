@@ -152,6 +152,7 @@ def handle_find(message):
             'message_id': sent_message.id,
             'moviename': moviename,
             'moviehref': moviehref,
+            'is_active': True  # Track whether this film list is active.
         })
 
         # Map message ID to user's film list for later retrieval.
@@ -191,7 +192,7 @@ def handle_reply(message):
 
             # Find which film data corresponds to the replied message ID.
             for film_data in film_data_list:
-                if film_data['message_id'] == message.reply_to_message.id:
+                if film_data['message_id'] == message.reply_to_message.id and film_data['is_active']:
                     if 1 <= gopage <= len(film_data['moviename']):
                         gethref = subdown(gopage, film_data['moviehref'])
                         if gethref:
@@ -211,8 +212,9 @@ def handle_reply(message):
                         bot.reply_to(message, "Invalid movie number or no active search!")
                     break
             
-            # Clear user's request after processing.
-            del user_requests[user_id]
+            # Optionally keep the request active after processing.
+            # Comment out this line if you want it inactive after one use.
+            # film_data['is_active'] = False
             
     except ValueError:
         bot.reply_to(message, "Please reply with a valid movie number.")
